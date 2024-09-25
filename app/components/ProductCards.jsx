@@ -21,6 +21,8 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, usePathname } from 'next/navigation';
 import "../styles/globals.css";
 import SkeletonCard from './SkeletonCard';
+import Sort from './Sort';
+import Filter from './Filter';
 
 /**
  * ProductCards component
@@ -34,10 +36,12 @@ const ProductCards = ({ initialProducts, currentPage }) => {
   const [products, setProducts] = useState(initialProducts || []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [filteredProducts, setFilteredProducts] = useState(products)
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const pageParam = searchParams.get('page') || '1';
   const page = parseInt(pageParam) - 1;
+  const categories = [...new Set(products.map(product => product.category))];
 
   useEffect(() => {
     /**
@@ -68,6 +72,11 @@ const ProductCards = ({ initialProducts, currentPage }) => {
     fetchProducts();
   }, [page]);
 
+   // Update filteredProducts whenever products change
+   useEffect(() => {
+    setFilteredProducts(products); // This ensures filteredProducts is populated with products after the fetch.
+  }, [products]);
+
   /**
    * Handle next page click
    * 
@@ -90,6 +99,26 @@ const ProductCards = ({ initialProducts, currentPage }) => {
     }
   };
 
+  const handleSort = (order) => {
+    const sortedProducts = [...filteredProducts].sort((a,b) => {
+      if (order === 'asc') {
+        return a.price - b.price;
+      } else {
+        return b.price - a.price;
+      }
+    })
+    setFilteredProducts(sortedProducts);
+  }
+
+  const handleFilter = (category) => {
+    if (category) {
+      const filtered = products.filter((product) => product.category === category)
+      setFilteredProducts(filtered); 
+    } else {
+      setFilteredProducts(products);
+    }
+  }
+
   if (loading) {
     return (
         <div className="container mx-auto py-8 bg-gray-100">
@@ -111,8 +140,10 @@ const ProductCards = ({ initialProducts, currentPage }) => {
   return (
     <div className="container mx-auto py-8 bg-gray-100">
       <h1 className="text-2xl font-bold mb-6 text-center">Products</h1>
+      <Sort onSort={handleSort}/>
+      <Filter onFilter={handleFilter} categories ={categories}/>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {products.map((product) => (
+        {filteredProducts.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
       </div>
