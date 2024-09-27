@@ -18,7 +18,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useSearchParams, usePathname } from 'next/navigation';
+import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import "../styles/globals.css";
 import SkeletonCard from './SkeletonCard';
 import Sort from './Sort';
@@ -32,16 +32,33 @@ import Filter from './Filter';
  * 
  * @returns {JSX.Element} - ProductCards component
  */
-const ProductCards = ({ initialProducts, currentPage }) => {
+const ProductCards = ({ initialProducts, currentPage, initialCategories }) => {
   const [products, setProducts] = useState(initialProducts || []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [filteredProducts, setFilteredProducts] = useState(products)
+  const [currentPageState, setCurrentPageState] = useState(currentPage || 1);
+  const [categories, setCategories] = useState(initialCategories || []);
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const pageParam = searchParams.get('page') || '1';
-  const page = parseInt(pageParam) - 1;
-  const categories = [...new Set(products.map(product => product.category))];
+  const router = useRouter();
+ // const pageParam = searchParams.get('page') || '1';
+ // const page = parseInt(pageParam) - 1;
+
+  const perPage = 20;
+  const totalFiltered = filteredProducts.length;
+  const totalPages = Math.ceil(totalFiltered / perPage);
+  //const categories = [...new Set(products.map(product => product.category))];
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch('https://next-ecommerce-api.vercel.app/categories');
+      const data = await response.json();
+      setCategories(data);
+    } catch {
+      console.error('Failed to fetch categories');
+    }
+  };
 
   useEffect(() => {
     /**
@@ -55,13 +72,15 @@ const ProductCards = ({ initialProducts, currentPage }) => {
       setError(null);
       try {
         const response = await fetch(
-          `https://next-ecommerce-api.vercel.app/products?skip=${page * 20}&limit=20`
+          `https://next-ecommerce-api.vercel.app/products?skip=${(currentPageState - 1) * perPage}&limit=20`
         );
         if (!response.ok) {
           throw new Error('Failed to fetch products');
         }
         const data = await response.json();
         setProducts(data);
+        setFilteredProducts(data);
+        fetchCategories();
       } catch (error) {
         setError(error.message);
       } finally {
@@ -70,7 +89,8 @@ const ProductCards = ({ initialProducts, currentPage }) => {
     };
 
     fetchProducts();
-  }, [page]);
+  }, []);
+
 
    // Update filteredProducts whenever products change
    useEffect(() => {
@@ -83,8 +103,12 @@ const ProductCards = ({ initialProducts, currentPage }) => {
    * @returns {void}
    */
   const handleNextPage = () => {
-    const nextPage = page + 2;
-    window.history.pushState({}, '', `${pathname}?page=${nextPage}`);
+    const nextPage = currentPageState + 1;
+    //window.history.pushState({}, '', `${pathname}?page=${nextPage}`);
+    if (nextPage <= totalPages) {
+      setCurrentPageState(nextPage);
+      updateQueryParams({ page: nextPage });
+    }
   };
 
   /**
@@ -93,31 +117,55 @@ const ProductCards = ({ initialProducts, currentPage }) => {
    * @returns {void}
    */
   const handlePreviousPage = () => {
-    if (page > 0) {
-      const prevPage = page;
-      window.history.pushState({}, '', `${pathname}?page=${prevPage}`);
+    const prevPage = currentPageState - 1;
+    if (prevPage >= 1) {
+      setCurrentPageState(prevPage);
+      updateQueryParams({page: prevPage})
+      //window.history.pushState({}, '', `${pathname}?page=${prevPage}`);
     }
   };
 
   const handleSort = (order) => {
     const sortedProducts = [...filteredProducts].sort((a,b) => {
-      if (order === 'asc') {
-        return a.price - b.price;
-      } else {
-        return b.price - a.price;
-      }
+     return order === "asc" ? a.price - b.price : b.price - a.price;
     })
     setFilteredProducts(sortedProducts);
+    updateQueryParams({ sort: order });
   }
 
   const handleFilter = (category) => {
     if (category) {
       const filtered = products.filter((product) => product.category === category)
-      setFilteredProducts(filtered); 
+      setFilteredProducts(filtered);
+      setCurrentPageState(1); // Reset pagination after filtering
+      updateQueryParams({ filter: category, page: 1 });
     } else {
       setFilteredProducts(products);
+      setCurrentPageState(1)
+      updateQueryParams({ filter: null});
     }
   }
+
+   // Reset filters and sorting
+   const resetFilters = () => {
+    setFilteredProducts(products);
+    setCurrentPageState(1);
+    updateQueryParams({ sort: null, filter: null, page: 1 });
+  };
+
+   // Helper function to update query params
+   const updateQueryParams = (params) => {
+    const newParams = new URLSearchParams(searchParams);
+    Object.entries(params).forEach(([key, value]) => {
+      if (value) {
+        newParams.set(key, value);
+      } else {
+        newParams.delete(key);
+      }
+    });
+    const newPath = `${pathname}?${newParams.toString()}`;
+    router.push(newPath);
+  };
 
   if (loading) {
     return (
@@ -140,16 +188,21 @@ const ProductCards = ({ initialProducts, currentPage }) => {
   return (
     <div className="container mx-auto py-8 bg-gray-100">
       <h1 className="text-2xl font-bold mb-6 text-center">Products</h1>
-      <Sort onSort={handleSort}/>
-      <Filter onFilter={handleFilter} categories ={categories}/>
+      <div className='flex flex-col items-center justify-center'>
+        <Sort onSort={handleSort}/>
+        <Filter onFilter={handleFilter} categories ={categories}/>
+        <button className="bg-gray-800 text-white py-2 px-4 rounded w-60 mt-4" onClick={resetFilters}>Reset all filters</button>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {filteredProducts.map((product) => (
+        {filteredProducts
+        .slice((currentPageState -1) * perPage, currentPageState * perPage)
+        .map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
       </div>
       <div className="flex justify-center space-x-4 mt-8">
         <div>
-            <button onClick={handlePreviousPage} disabled={page === 0} className="group" >
+            <button onClick={handlePreviousPage} disabled={currentPageState === 1} className="group" >
                 <svg 
                     xmlns="http://www.w3.org/2000/svg" 
                     height="32" width="32" 
@@ -163,9 +216,9 @@ const ProductCards = ({ initialProducts, currentPage }) => {
 
         </div>
         
-        <p>{page + 1}</p>
+        <p>{currentPageState}</p>
         <div>
-            <button onClick={handleNextPage} className="group">
+            <button onClick={handleNextPage} disabled={currentPageState === totalPages} className="group">
                 <svg 
                     xmlns="http://www.w3.org/2000/svg" 
                     height="32" width="32" 
@@ -254,10 +307,18 @@ export async function getServerSideProps(context) {
     );
     const products = await response.json();
 
+    // Get all categories from the fetched products
+    const allProductsResponse = await fetch(`https://next-ecommerce-api.vercel.app/products`);
+    const allProducts = await allProductsResponse.json();
+
+    // Extract unique categories from all products
+    const categories = [...new Set(allProducts.map((product) => product.category))];
+
     return {
       props: {
         initialProducts: products,
         currentPage: page,
+        initialCategories: categories,
       },
     };
   } catch (error) {
@@ -265,6 +326,7 @@ export async function getServerSideProps(context) {
       props: {
         initialProducts: [],
         currentPage: page,
+        initialCategories: [],
         error: 'Failed to load products',
       },
     };
