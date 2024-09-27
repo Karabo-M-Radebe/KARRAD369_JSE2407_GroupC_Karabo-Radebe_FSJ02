@@ -39,6 +39,7 @@ const ProductCards = ({ initialProducts, currentPage, initialCategories }) => {
   const [filteredProducts, setFilteredProducts] = useState(products)
   const [currentPageState, setCurrentPageState] = useState(currentPage || 1);
   const [categories, setCategories] = useState(initialCategories || []);
+  const [searchTerm, setSearchTerm] = useState("") //State variable for search input
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
@@ -146,10 +147,25 @@ const ProductCards = ({ initialProducts, currentPage, initialCategories }) => {
     }
   }
 
+  const handleSearch = () => {
+    const filtered = products.filter((product) => {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        product.title.toLowerCase().includes(searchLower) ||
+        product.category.toLowerCase().includes(searchLower) ||
+        (product.tags && product.tags.join(", ").toLowerCase().includes(searchLower))
+      )
+    })  
+    setFilteredProducts(filtered);
+    setCurrentPageState(1); // Reset pagination after filtering
+    //updateQueryParams({ search: searchTerm, page: 1 });
+  };
+
    // Reset filters and sorting
    const resetFilters = () => {
     setFilteredProducts(products);
     setCurrentPageState(1);
+    setSearchTerm("");
     updateQueryParams({ sort: null, filter: null, page: 1 });
   };
 
@@ -188,10 +204,20 @@ const ProductCards = ({ initialProducts, currentPage, initialCategories }) => {
   return (
     <div className="container mx-auto py-8 bg-gray-100">
       <h1 className="text-2xl font-bold mb-6 text-center">Products</h1>
-      <div className='flex flex-col items-center justify-center'>
+      <div className='flex gap-6 items-center justify-center my-4'>
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            placeholder="Search products..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className='py-2 px-4 rounded bg-gray-200'
+          />
+          <button onClick={handleSearch} className="bg-gray-800 text-white py-2 px-4 rounded w-24">Search</button>
+        </div>
         <Sort onSort={handleSort}/>
         <Filter onFilter={handleFilter} categories ={categories}/>
-        <button className="bg-gray-800 text-white py-2 px-4 rounded w-60 mt-4" onClick={resetFilters}>Reset all filters</button>
+        <button className="bg-gray-800 text-white py-2 px-4 rounded w-60 my-4" onClick={resetFilters}>Reset all filters</button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {filteredProducts
