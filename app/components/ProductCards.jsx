@@ -61,36 +61,38 @@ const ProductCards = ({ initialProducts, currentPage, initialCategories }) => {
     }
   };
 
-  useEffect(() => {
-    /**
+   /**
    * Fetch products data
    * 
    * @async
    * @returns {Promise<void>}
    */
-    const fetchProducts = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await fetch(
-          `https://next-ecommerce-api.vercel.app/products?skip=${(currentPageState - 1) * perPage}&limit=20`
-        );
-        if (!response.ok) {
-          throw new Error('Failed to fetch products');
-        }
-        const data = await response.json();
-        setProducts(data);
-        setFilteredProducts(data);
-        fetchCategories();
-      } catch (error) {
-        setError(error.message);
-      } finally {
-        setLoading(false);
+   const fetchProducts = async (page) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(
+        `https://next-ecommerce-api.vercel.app/products?skip=${(page - 1) * perPage}&limit=${perPage}`
+      );
+      if (!response.ok) {
+        throw new Error('Failed to fetch products');
       }
-    };
+      const data = await response.json();
+      setProducts(data);
+      setFilteredProducts(data);
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchProducts();
-  }, []);
+  useEffect(() => {
+    fetchProducts(currentPageState);
+    if (categories.length === 0) {
+      fetchCategories();
+    }
+  }, [currentPageState]);
 
 
    // Update filteredProducts whenever products change
@@ -220,9 +222,7 @@ const ProductCards = ({ initialProducts, currentPage, initialCategories }) => {
         <button className="bg-gray-800 text-white py-2 px-4 rounded w-60 my-4" onClick={resetFilters}>Reset all filters</button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {filteredProducts
-        .slice((currentPageState -1) * perPage, currentPageState * perPage)
-        .map((product) => (
+        {filteredProducts.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
       </div>
