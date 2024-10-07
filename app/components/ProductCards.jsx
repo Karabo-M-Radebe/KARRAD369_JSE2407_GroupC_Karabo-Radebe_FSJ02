@@ -350,6 +350,7 @@ export async function getServerSideProps(context) {
         initialProducts: products,
         currentPage: page,
         initialCategories: categories,
+        revalidate: 60, // Enable caching with revalidation every 60 seconds
       },
     };
   } catch (error) {
