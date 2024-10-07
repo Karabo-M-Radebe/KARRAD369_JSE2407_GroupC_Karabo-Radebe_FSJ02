@@ -1,12 +1,11 @@
 import { useState } from 'react';
 
-
 const Sort = ({ onSort }) => {
   const [sortOrder, setSortOrder] = useState('');
 
   const handleSort = (order) => {
     setSortOrder(order);
-    onSort(order);
+    onSort;
   };
 
   return (
