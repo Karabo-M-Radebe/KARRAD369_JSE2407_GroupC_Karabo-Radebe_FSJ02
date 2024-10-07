@@ -121,7 +121,7 @@ const ProductCards = ({ initialProducts, currentPage, initialCategories }) => {
     <div className="container mx-auto py-8 bg-gray-100">
       <h1 className="text-2xl font-bold mb-6 text-center">Products</h1>
       <div className='flex gap-6 items-center justify-center my-4'>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <input
             type="text"
             placeholder="Search products..."
@@ -130,12 +130,12 @@ const ProductCards = ({ initialProducts, currentPage, initialCategories }) => {
             className='py-2 px-4 rounded bg-gray-200'
           />
           <button onClick={handleSearch} className="bg-gray-800 text-white py-2 px-4 rounded w-24">Search</button>
+          <Sort onSort={handleSort}/>
+          <Filter onFilter={handleFilter} categories={categories} />
+          <button className="bg-gray-800 text-white py-2 px-4 rounded w-50" onClick={resetFilters}>
+            Reset all filters
+          </button>
         </div>
-        <Sort onSort={handleSort}/>
-        <Filter onFilter={handleFilter} categories={categories} />
-        <button className="bg-gray-800 text-white py-2 px-4 rounded w-60" onClick={resetFilters}>
-          Reset all filters
-        </button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
