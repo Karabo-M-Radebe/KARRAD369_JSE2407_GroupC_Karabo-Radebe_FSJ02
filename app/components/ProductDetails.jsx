@@ -1,7 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import "../styles/globals.css";
+import Head from 'next/head';
+
+<Head>
+  {/* <title>{product.title}</title> */}
+  {/* <meta name="description" content={product.description} /> */}
+</Head>
 
 /**
  * ProductDetail component
@@ -12,7 +18,6 @@ import "../styles/globals.css";
  */
 const ProductDetail = ({ product }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [sortedReviews, setSortedReviews] = useState(product.reviews || []);
   const [sortOption, setSortOption] = useState(""); // Store the selected sort option
 
   if (!product) {
@@ -21,29 +26,6 @@ const ProductDetail = ({ product }) => {
 
   // Ensure product.images is an array and has at least one image
   const images = Array.isArray(product.images) && product.images.length > 0 ? product.images : [];
-
-  /**
-   * Handle sorting of reviews
-   * 
-   * @param {string} option - Sort option selected by the user
-   * @returns {void}
-   */
-  const handleSort = (option) => {
-    setSortOption(option);
-    let sorted = [...sortedReviews];
-
-    if (option === "date-asc") {
-      sorted.sort((a, b) => new Date(a.date) - new Date(b.date));
-    } else if (option === "date-desc") {
-      sorted.sort((a, b) => new Date(b.date) - new Date(a.date));
-    } else if (option === "rating-asc") {
-      sorted.sort((a, b) => a.rating - b.rating);
-    } else if (option === "rating-desc") {
-      sorted.sort((a, b) => b.rating - a.rating);
-    }
-
-    setSortedReviews(sorted);
-  };
 
   /**
    * Handle back button click
@@ -71,6 +53,28 @@ const ProductDetail = ({ product }) => {
   const previousImage = () => {
     setCurrentImageIndex((prevIndex) => (prevIndex - 1 + images.length) % images.length);
   };
+
+  /**
+   * Sort reviews based on the selected option
+   * Caches the sorted reviews to prevent unnecessary re-sorting
+   */
+  const sortedReviews = useMemo(() => {
+    if (!product.reviews || product.reviews.length === 0) return [];
+
+    let sorted = [...product.reviews];
+
+    if (sortOption === "date-asc") {
+      sorted.sort((a, b) => new Date(a.date) - new Date(b.date));
+    } else if (sortOption === "date-desc") {
+      sorted.sort((a, b) => new Date(b.date) - new Date(a.date));
+    } else if (sortOption === "rating-asc") {
+      sorted.sort((a, b) => a.rating - b.rating);
+    } else if (sortOption === "rating-desc") {
+      sorted.sort((a, b) => b.rating - a.rating);
+    }
+
+    return sorted;
+  }, [sortOption, product.reviews]);
 
   return (
     <div className="container mx-auto py-8">
@@ -152,7 +156,7 @@ const ProductDetail = ({ product }) => {
           <select
             id="sort"
             value={sortOption}
-            onChange={(e) => handleSort(e.target.value)}
+            onChange={(e) => setSortOption(e.target.value)}
             className="py-2 px-4 rounded bg-gray-200"
           >
             <option value="">Default</option>
