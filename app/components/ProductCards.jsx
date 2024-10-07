@@ -23,6 +23,11 @@ import "../styles/globals.css";
 import SkeletonCard from './SkeletonCard';
 import Sort from './Sort';
 import Filter from './Filter';
+import Pagination from './pagination';
+import Loading from './Loading';
+import Error from './Error';
+import { fetchProducts, fetchCategories } from '../lib/api';
+import Head from 'next/head';
 
 /**
  * ProductCards component
