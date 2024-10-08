@@ -37,7 +37,33 @@ const ProductCards = ({ initialProducts, currentPage, initialCategories }) => {
       try {
         const fetchedProducts = await fetchProducts(currentPageState, perPage);
         setProducts(fetchedProducts);
-        setFilteredProducts(fetchedProducts);
+
+        let filtered = fetchedProducts;
+
+        if (selectedCategory) {
+          filtered = filtered.filter((product) =>
+            product.category === selectedCategory
+          );
+        }
+
+        // Search products
+        if (searchTerm) {
+          filtered = filtered.filter((product) =>
+            product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (product.tags && product.tags.join(', ').toLowerCase().includes(searchTerm.toLowerCase()))
+          );
+        }
+
+        // Sort products
+        if (sortOrder === 'asc') {
+          filtered = filtered.sort((a, b) => a.price - b.price);
+        } else if (sortOrder === 'desc') {
+          filtered = filtered.sort((a, b) => b.price - a.price);
+        }
+
+        setFilteredProducts(filtered);
+
 
         if (!categories.length) {
           const fetchedCategories = await fetchCategories();
@@ -50,7 +76,7 @@ const ProductCards = ({ initialProducts, currentPage, initialCategories }) => {
       }
     };
     loadProductsAndCategories();
-  }, [currentPageState]);
+  }, [currentPageState, searchTerm, selectedCategory, sortOrder]);
 
   const handleSearch = () => {
     const filtered = products.filter((product) => {
