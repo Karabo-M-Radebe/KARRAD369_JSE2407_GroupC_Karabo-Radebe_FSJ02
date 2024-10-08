@@ -11,16 +11,6 @@ import Error from './Error';
 import { fetchProducts, fetchCategories } from '../lib/api';
 import Head from 'next/head';
 
-<Head>
-  <title>The Pantry - Browse Products</title>
-  <meta name="description" content="Browse our wide range of products." />
-  <meta name="keywords" content="shop, products, buy" />
-  <meta name="author" content="The Pantry" />
-  <meta property="og:title" content="The Pantry" />
-  <meta property="og:description" content="Your one-stop shop for all your daily essentials." />
-  <meta property="og:type" content="website" />
-</Head>
-
 
 const ProductCards = ({ initialProducts, currentPage, initialCategories }) => {
   const [products, setProducts] = useState(initialProducts || []);
@@ -72,7 +62,8 @@ const ProductCards = ({ initialProducts, currentPage, initialCategories }) => {
       );
     });
     setFilteredProducts(filtered);
-    setCurrentPageState(1); 
+    setCurrentPageState(1);
+    updateQueryParams({search: searchTerm})
   };
 
   const handleSort = (order) => {
@@ -81,6 +72,7 @@ const ProductCards = ({ initialProducts, currentPage, initialCategories }) => {
       order === 'asc' ? a.price - b.price : b.price - a.price
     );
     setFilteredProducts(sortedProducts);
+    setCurrentPageState(1)
     updateQueryParams({ sort: order });
   };
 
@@ -91,13 +83,16 @@ const ProductCards = ({ initialProducts, currentPage, initialCategories }) => {
     );
     setFilteredProducts(filtered);
     setCurrentPageState(1); // Reset to page 1 after filtering
+    updateQueryParams({category})
   };
 
   const resetFilters = () => {
     setFilteredProducts(products);
     setCurrentPageState(1);
-    setSearchTerm("");
-    setSortOrder("");
+    setSearchTerm('');
+    setSortOrder('');
+    setSelectedCategory('');
+    updateQueryParams({search:'', sort:'', category:''});
   };
 
   // Reflect changes in the URL query parameters
@@ -119,6 +114,16 @@ const ProductCards = ({ initialProducts, currentPage, initialCategories }) => {
 
   return (
     <div className="container mx-auto py-8 bg-gray-100">
+      <Head>
+        <title>The Pantry - Browse Products</title>
+        <meta name="description" content="Browse our wide range of products." />
+        <meta name="keywords" content="shop, products, buy" />
+        <meta name="author" content="The Pantry" />
+        <meta property="og:title" content="The Pantry" />
+        <meta property="og:description" content="Your one-stop shop for all your daily essentials." />
+        <meta property="og:type" content="website" />
+      </Head>
+      
       <h1 className="text-2xl font-bold mb-6 text-center">Products</h1>
       <div className='flex gap-6 items-center justify-center my-4'>
         <div className="flex flex-wrap items-center gap-2">
