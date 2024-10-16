@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 const Filter = ({ onFilter, categories }) => {
   const [selectedCategory, setSelectedCategory] = useState('');
 
-  const handleFilter = (category) => {
+  const handleFilter = (e) => {
+    const category = e.target.value;
     setSelectedCategory(category);
     onFilter(category);
   };
@@ -12,7 +13,7 @@ const Filter = ({ onFilter, categories }) => {
     <div className="flex justify-center space-x-4 my-4">
       <select 
         value={selectedCategory} 
-        onChange={(e) => handleFilter(e.target.value)} 
+        onChange={handleFilter} 
         className="py-2 px-4 rounded bg-gray-300"
       >
         <option value="">All Categories</option>

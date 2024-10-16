@@ -1,7 +1,10 @@
 const Pagination = ({ currentPage, totalPages, handleNextPage, handlePreviousPage }) => (
     <div className="flex justify-center space-x-4 mt-8">
       <div>
-        <button onClick={handlePreviousPage} disabled={currentPage === 1} className="group">
+        <button 
+          onClick={handlePreviousPage} 
+          disabled={currentPage === 1} 
+          className="group">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             height="32"
@@ -17,7 +20,7 @@ const Pagination = ({ currentPage, totalPages, handleNextPage, handlePreviousPag
         </button>
       </div>
       
-      <p>{currentPage}</p>
+      <p>{currentPage} / {totalPages}</p>
   
       <div>
         <button onClick={handleNextPage} disabled={currentPage === totalPages} className="group">
